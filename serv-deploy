@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# Function to clone or pull from Git repository
+clone_or_pull() {
+  if [ "$1" == "new" ]; then
+    # If it's a new installation
+    read -p "Enter Domain: " domain
+    read -p "Enter Git Repository URL: " git_url
+
+    # Check if the domain directory already exists
+    if [ -d "$domain" ]; then
+      echo "Error: The domain directory already exists. Choose a different domain or use 'old' for existing installations."
+      exit 1
+    fi
+
+    # Create domain directory
+    mkdir -p "$domain"
+
+    # Change directory to the domain folder
+    cd "$domain" || exit
+
+    # Clone the Git repository
+    git clone "$git_url" .
+
+  elif [ "$1" == "old" ]; then
+    # If it's an old installation
+    read -p "Enter Domain: " domain
+
+    # Check if the domain directory exists
+    if [ ! -d "$domain" ]; then
+      echo "Error: The domain directory does not exist. Choose a different domain or use 'new' for new installations."
+      exit 1
+    fi
+
+    # Change directory to the domain folder
+    cd "$domain" || exit
+
+    # Check if it's a Git repository
+    if [ ! -d .git ]; then
+      echo "Error: The directory is not a Git repository. Choose a different domain or use 'new' for new installations."
+      exit 1
+    fi
+
+    # Pull the latest changes from the Git repository
+    git pull
+  fi
+}
+
+# Function to move contents to public_html
+move_to_public_html() {
+  # Move all contents of the public folder except index.php
+  find ./public -maxdepth 1 -type f ! -name 'index.php' -exec mv {} ../public_html \;
+}
+
+# Main Script
+
+read -p "Is this a new installation or old? (new/old): " installation_type
+
+clone_or_pull "$installation_type"
+
+# Move contents to public_html
+move_to_public_html
+
+echo "Deployment completed successfully."
